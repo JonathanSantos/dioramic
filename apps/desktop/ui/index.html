@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Dioramic</title>
+    <link data-trunk rel="rust" data-wasm-opt="s" />
+    <link data-trunk rel="css" href="styles/app.css" />
+    <!-- Brand assets live once in the repo; trunk copies them into dist/. -->
+    <link data-trunk rel="copy-dir" href="../../../assets/fonts" />
+    <link data-trunk rel="copy-file" href="../../../brand/logo/dioramic-mark.svg" />
+    <link data-trunk rel="copy-file" href="../../../brand/logo/dioramic-mark-dark.svg" />
+    <link data-trunk rel="copy-file" href="../../../brand/logo/dioramic-wordmark.svg" />
+    <link data-trunk rel="copy-file" href="../../../brand/logo/dioramic-wordmark-dark.svg" />
+    <link data-trunk rel="copy-file" href="../../../brand/icon/dioramic-favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="dioramic-favicon.svg" />
+    <script>
+      // Apply the saved UI theme before the first paint (no flash of the wrong theme).
+      try {
+        const theme = localStorage.getItem("dioramic.ui-theme");
+        if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+      } catch (_) {}
+    </script>
+  </head>
+  <body></body>
+</html>

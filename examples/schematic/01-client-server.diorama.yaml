@@ -1,0 +1,15 @@
+# Client-server: the smallest system design. A browser talks HTTPS to one server, which reads and writes a database.
+# Teaches: the schematic theme out of the box (hub layout, rails, semantic colors, legend) with no hints at all.
+diorama: 1
+title: Client-Server
+subtitle: one client, one server, one database
+theme: schematic
+
+nodes:
+  - { id: browser, icon: laptop,   label: Browser }
+  - { id: server,  icon: server,   label: Web Server }
+  - { id: db,      icon: postgres, label: Database }
+
+edges:
+  - browser -> server: HTTPS
+  - server -> db: SQL

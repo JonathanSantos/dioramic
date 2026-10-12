@@ -1,0 +1,81 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/dioramic-spec",
+    "crates/dioramic-core",
+    "crates/dioramic-render",
+    "crates/dioramic-mcp",
+    "crates/dioramic-cli",
+    "crates/dioramic-packs",
+    "crates/test-support",
+    "xtask",
+]
+# O app desktop (Tauri 2 + Leptos) é um workspace separado (T-203).
+exclude = ["apps"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.89"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/dioramic/dioramic"
+authors = ["Dioramic contributors"]
+
+# Versões verificadas no crates.io em 2026-10-09 (T-000).
+[workspace.dependencies]
+# crates internos
+dioramic-spec = { path = "crates/dioramic-spec", version = "0.1.0" }
+dioramic-core = { path = "crates/dioramic-core", version = "0.1.0" }
+dioramic-render = { path = "crates/dioramic-render", version = "0.1.0" }
+dioramic-mcp = { path = "crates/dioramic-mcp", version = "0.1.0" }
+dioramic-packs = { path = "crates/dioramic-packs", version = "0.1.0" }
+test-support = { path = "crates/test-support" }
+
+# spec / serialização
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+serde-saphyr = "1.3.0"
+schemars = { version = "1.2.2", features = ["indexmap2"] }
+indexmap = { version = "2.14.2", features = ["serde"] }
+thiserror = "2.0.21"
+strsim = "0.11.1"
+
+# texto (puro Rust, compila para wasm32)
+ttf-parser = "0.25.1"
+rustybuzz = "0.20.1"
+
+# raster e encoders (usar os tipos re-exportados por resvg: resvg::usvg, resvg::tiny_skia, resvg::usvg::fontdb)
+resvg = { version = "0.48.1", default-features = false, features = ["text"] }
+png = "0.18.1"
+gif = "0.14.2"
+quantette = { version = "0.6.0", default-features = false, features = ["threads", "kmeans"] }
+rayon = "1.12.0"
+
+# MCP / async
+rmcp = { version = "3.5.1", default-features = false, features = ["server", "macros", "transport-io", "schemars", "base64"] }
+tokio = { version = "1.53.2", features = ["rt-multi-thread", "macros", "io-std", "sync"] }
+base64 = "0.23.1"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "fmt"] }
+
+# CLI
+clap = { version = "4.6.7", features = ["derive"] }
+notify = "8.2.0"
+anyhow = "1.0.104"
+
+# testes
+insta = "1.49.0"
+image-compare = "0.5.0"
+proptest = "1.11.0"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+
+[profile.dev.package."*"]
+# Raster e encoders ficam lentos demais sem otimização, mesmo em debug.
+opt-level = 2

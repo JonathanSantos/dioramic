@@ -1,0 +1,44 @@
+# Pipeline de machine learning: ingestão de dados, feature store, treino,
+# registro de modelos, serving online e monitoramento de drift.
+diorama: 1
+title: Recommendation ML Pipeline
+subtitle: from raw events to online inference
+theme: blueprint
+
+styles:
+  data:    { color: teal }
+  model:   { color: violet, width: 2.5 }
+  serving: { color: blue }
+  feedback: { color: orange, dashed: true }
+
+zones:
+  - { id: ingest,   label: Ingestion,       color: teal }
+  - { id: features, label: Feature Store,   color: green }
+  - { id: training, label: Training,        color: violet }
+  - { id: serving,  label: Serving,         color: blue }
+  - { id: ops,      label: Monitoring,      color: orange }
+
+nodes:
+  - { id: events,     icon: queue,       label: Clickstream,      zone: ingest }
+  - { id: raw_lake,   icon: storage,     label: Raw Data Lake,    zone: ingest }
+  - { id: offline_fs, icon: database,    label: Offline Features, zone: features }
+  - { id: online_fs,  icon: redis,       label: Online Features,  zone: features }
+  - { id: trainer,    icon: k8s-cluster, label: GPU Training Jobs, zone: training }
+  - { id: registry,   icon: storage,     label: Model Registry,   zone: training, badge: v7 }
+  - { id: gateway,    icon: api-gateway, label: Inference API,    zone: serving }
+  - { id: model_srv,  icon: container,   label: Model Server,     zone: serving, replicas: 3 }
+  - { id: drift,      icon: monitor,     label: Drift Monitor,    zone: ops }
+  - { id: client,     icon: users,       label: Product Apps }
+
+edges:
+  - events -> raw_lake: stream sink @data
+  - raw_lake -> offline_fs: batch ETL @data
+  - offline_fs -> online_fs: materialize @data
+  - offline_fs -> trainer: training set @model
+  - trainer -> registry: register @model
+  - registry -> model_srv: deploy @model
+  - client -> gateway: predict @serving
+  - gateway -> model_srv: gRPC @serving
+  - model_srv -> online_fs: lookup @serving
+  - model_srv ..> drift: predictions @feedback
+  - drift ..> trainer: retrain trigger @feedback

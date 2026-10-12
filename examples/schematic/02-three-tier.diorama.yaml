@@ -1,0 +1,24 @@
+# Three-tier web app: presentation (clients), application (load-balanced app servers) and data (database + cache).
+# Teaches: zones as tiers, `replicas` for a horizontally scaled tier (one node, not one per server), and the cache/data classes side by side.
+diorama: 1
+title: Three-Tier Web App
+subtitle: load balancer, stateless app servers, cache and database
+theme: schematic
+
+zones:
+  - { id: clients, label: CLIENTS }
+  - { id: app,     label: APP TIER }
+  - { id: data,    label: DATA TIER }
+
+nodes:
+  - { id: users, icon: users,        label: Users,         zone: clients }
+  - { id: lb,    icon: loadbalancer, label: Load Balancer, zone: app }
+  - { id: app,   icon: server,       label: App Servers,   zone: app, replicas: 3 }
+  - { id: cache, icon: redis,        label: Redis Cache,   zone: data }
+  - { id: db,    icon: postgres,     label: Postgres,      zone: data }
+
+edges:
+  - users -> lb: HTTPS
+  - lb -> app
+  - app -> cache: GET/SET
+  - app -> db: SQL

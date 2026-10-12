@@ -1,0 +1,36 @@
+# Serverless Orders API on AWS: provider icons (aws/*) projected onto isometric blocks.
+# Needs the AWS pack (`dioramic icons install aws`); without it each node falls back to a built-in icon with a warning.
+diorama: 1
+title: Serverless Orders API
+subtitle: AWS icons · dioramic icons install aws
+theme: blueprint
+view: { rotation: auto }
+
+zones:
+  - { id: clients, label: CLIENTS, color: violet }
+  - { id: edge,    label: EDGE,    color: blue }
+  - { id: compute, label: COMPUTE, color: orange }
+  - { id: data,    label: DATA,    color: teal }
+
+nodes:
+  - { id: users,   icon: users,            label: Customers,   zone: clients }
+  - { id: cdn,     icon: aws/cloudfront,   label: CloudFront,  zone: edge }
+  - { id: auth,    icon: aws/cognito,      label: Cognito,     zone: edge }
+  - { id: api,     icon: aws/api-gateway,  label: API Gateway, zone: edge }
+  - { id: orders,  icon: aws/lambda,       label: Orders,      zone: compute }
+  - { id: queue,   icon: aws/sqs,          label: SQS,         zone: compute }
+  - { id: worker,  icon: aws/lambda,       label: Fulfillment, zone: compute }
+  - { id: table,   icon: aws/dynamodb,     label: DynamoDB,    zone: data }
+  - { id: bucket,  icon: aws/s3,           label: Receipts S3, zone: data }
+
+edges:
+  - users -> cdn: HTTPS @primary
+  - cdn -> api @primary
+  - api -> auth: JWT @secondary
+  - api -> orders @primary
+  - orders -> table: PutItem @secondary
+  - orders ..> queue: OrderPlaced
+  - queue ..> worker
+  - worker -> bucket: receipt @secondary
+
+animation: { preset: flow }

@@ -1,0 +1,44 @@
+# News feed with fan-out on write: a new post is stored, then a fan-out worker pushes its id into each follower's
+# cached timeline, so reading the feed is a single cache lookup. The app uploads media straight to object storage
+# (signed URL) and reads it back through a CDN.
+# Teaches: separate write and read paths, a queue decoupling the fan-out, and a cache that is the read model.
+diorama: 1
+title: News Feed
+subtitle: fan-out on write into cached timelines
+theme: schematic
+animation: { preset: flow }
+
+zones:
+  - { id: clients, label: CLIENTS }
+  - { id: api,     label: SERVICES }
+  - { id: async,   label: FAN-OUT }
+  - { id: data,    label: DATA }
+  - { id: media_z, label: MEDIA }
+
+nodes:
+  - { id: app,       icon: mobile,      label: Mobile App,      zone: clients }
+  - { id: cdn,       icon: cdn,         label: Media CDN,       zone: media_z }
+  - { id: gateway,   icon: api-gateway, label: API Gateway,     zone: api }
+  - { id: post_svc,  icon: server,      label: Post Service,    zone: api }
+  - { id: feed_svc,  icon: server,      label: Feed Service,    zone: api }
+  - { id: queue,     icon: queue,       label: Fan-out Queue,   zone: async }
+  - { id: fanout,    icon: function,    label: Fan-out Workers, zone: async, replicas: 3 }
+  - { id: graph,     icon: database,    label: Follower Graph,  zone: data }
+  - { id: posts,     icon: postgres,    label: Posts DB,        zone: data }
+  - { id: timelines, icon: redis,       label: Timeline Cache,  zone: data }
+  - { id: media,     icon: storage,     label: Media Storage,   zone: media_z }
+
+edges:
+  - app -> gateway: HTTPS
+  - app -> cdn: images
+  - cdn -> media
+  - gateway -> post_svc: new post
+  - gateway -> feed_svc: read feed
+  - post_svc -> posts
+  - app -> media: upload
+  - post_svc ..> queue: PostCreated
+  - queue -> fanout
+  - fanout -> graph: followers
+  - fanout -> timelines: push id
+  - feed_svc -> timelines: GET
+  - feed_svc -> posts: hydrate

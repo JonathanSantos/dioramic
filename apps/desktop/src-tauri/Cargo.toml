@@ -1,0 +1,38 @@
+[package]
+name = "dioramic-desktop"
+description = "Dioramic desktop app backend (Tauri 2): live preview, file tree, file watcher and export via dioramic_render::Engine"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+default-run = "dioramic-desktop"
+
+[lib]
+name = "dioramic_desktop"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build.workspace = true
+
+[dependencies]
+dioramic-desktop-ipc.workspace = true
+dioramic-spec.workspace = true
+dioramic-render.workspace = true
+dioramic-core.workspace = true
+dioramic-packs.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde-saphyr.workspace = true
+jsonc-parser.workspace = true
+thiserror.workspace = true
+tauri.workspace = true
+tauri-plugin-dialog.workspace = true
+notify.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

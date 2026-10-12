@@ -1,0 +1,45 @@
+# conceptual architecture, not the vendor's internal design
+# A WhatsApp-style chat, as commonly sketched in public system design discussions: clients hold a persistent
+# WebSocket to a gateway, the chat service routes each message through a stream, stores it, and either delivers it
+# online or wakes the device with a push notification; media goes to object storage behind a CDN.
+# Teaches: a stateful connection tier, presence, and delivery receipts flowing back through the same stream.
+diorama: 1
+title: Chat Messaging
+subtitle: conceptual WhatsApp-style design (public system design notes)
+theme: schematic
+animation: { preset: flow }
+
+zones:
+  - { id: clients,  label: CLIENTS }
+  - { id: connect,  label: CONNECTIONS }
+  - { id: services, label: SERVICES }
+  - { id: data,     label: DATA }
+  - { id: media_z,  label: MEDIA }
+
+nodes:
+  - { id: sender,    icon: mobile,      label: Sender,            zone: clients }
+  - { id: recipient, icon: mobile,      label: Recipient,         zone: clients }
+  - { id: ws,        icon: loadbalancer, label: WebSocket Gateway, zone: connect, replicas: 3 }
+  - { id: presence,  icon: redis,       label: Presence,          zone: connect }
+  - { id: chat,      icon: server,      label: Chat Service,      zone: services }
+  - { id: stream,    icon: queue,       label: Message Stream,    zone: services }
+  - { id: push,      icon: function,    label: Push Notifier,     zone: services }
+  - { id: messages,  icon: database,    label: Message Store,     zone: data }
+  - { id: media,     icon: storage,     label: Media Storage,     zone: media_z }
+  - { id: cdn,       icon: cdn,         label: Media CDN,         zone: media_z }
+  - { id: apns,      icon: cloud,       label: APNs / FCM }
+
+edges:
+  - sender -> ws: WebSocket
+  - ws -> recipient: WebSocket
+  - ws -> presence: online/offline
+  - ws -> chat: msg + receipts
+  - chat -> presence: lookup
+  - chat -> messages: store
+  - chat ..> stream: route
+  - stream ..> ws: to recipient
+  - stream ..> push: offline
+  - push -> apns
+  - sender -> media: upload
+  - recipient -> cdn: download
+  - cdn -> media

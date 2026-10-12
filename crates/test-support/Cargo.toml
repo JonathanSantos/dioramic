@@ -1,0 +1,21 @@
+[package]
+name = "test-support"
+description = "Test helpers for Dioramic: fixtures, visual asserts, golden files"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+dioramic-spec.workspace = true
+dioramic-core.workspace = true
+dioramic-render.workspace = true
+insta.workspace = true
+image-compare.workspace = true
+png.workspace = true
+# Same version insta already pulls in (no new crate in Cargo.lock); readable golden text diffs.
+similar = "2.7.0"
+
+[lints]
+workspace = true

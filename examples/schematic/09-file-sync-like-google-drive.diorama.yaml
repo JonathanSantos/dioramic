@@ -1,0 +1,50 @@
+# conceptual architecture, not the vendor's internal design
+# A Google Drive-style file sync, as commonly sketched in public system design discussions: clients upload files in
+# chunks, a metadata service tracks versions, blocks live in object storage, a sync queue tells other devices what
+# changed, downloads come from a CDN, and an indexer keeps search up to date.
+# Teaches: splitting metadata from blob storage, and a notification fan-out that keeps devices in sync.
+diorama: 1
+title: File Sync
+subtitle: conceptual Google Drive-style design (public system design notes)
+theme: schematic
+animation: { preset: flow }
+
+zones:
+  - { id: clients,  label: CLIENTS }
+  - { id: api,      label: API }
+  - { id: sync,     label: SYNC }
+  - { id: data,     label: STORAGE }
+  - { id: search_z, label: SEARCH }
+
+nodes:
+  - { id: desktop,  icon: workstation, label: Desktop Client,   zone: clients }
+  - { id: phone,    icon: mobile,      label: Mobile Client,    zone: clients }
+  - { id: gateway,  icon: api-gateway, label: API Gateway,      zone: api }
+  - { id: upload,   icon: server,      label: Chunked Upload,   zone: api }
+  - { id: meta,     icon: server,      label: Metadata Service, zone: api }
+  - { id: search,   icon: server,      label: Search Service,   zone: search_z }
+  - { id: changes,  icon: queue,       label: Change Queue,     zone: sync }
+  - { id: notify,   icon: server,      label: Notification Svc, zone: sync }
+  - { id: indexer,  icon: function,    label: Indexer,          zone: search_z }
+  - { id: meta_db,  icon: postgres,    label: Metadata DB,      zone: data }
+  - { id: blocks,   icon: storage,     label: Block Storage,    zone: data }
+  - { id: index,    icon: database,    label: Search Index,     zone: search_z }
+  - { id: cdn,      icon: cdn,         label: Download CDN,     zone: data }
+
+edges:
+  - desktop -> gateway: HTTPS
+  - phone -> gateway: HTTPS
+  - gateway -> upload: chunks
+  - gateway -> meta
+  - gateway -> search: find
+  - upload -> blocks: put block
+  - upload -> meta: commit
+  - meta -> meta_db: SQL
+  - meta ..> changes: FileChanged
+  - changes ..> notify
+  - changes ..> indexer
+  - notify ..> desktop: long poll
+  - indexer -> index
+  - search -> index
+  - phone -> cdn: download
+  - cdn -> blocks

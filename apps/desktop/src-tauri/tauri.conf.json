@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Dioramic",
+  "version": "0.1.0",
+  "identifier": "dev.dioramic.desktop",
+  "build": {
+    "beforeDevCommand": { "script": "trunk serve", "cwd": "../ui" },
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": { "script": "trunk build --release", "cwd": "../ui" },
+    "frontendDist": "../ui/dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Dioramic",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1100,
+        "minHeight": 680,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "backgroundColor": "#F2F4F8"
+      }
+    ],
+    "security": { "csp": null }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "DeveloperTool",
+    "shortDescription": "Isometric system design diagrams",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

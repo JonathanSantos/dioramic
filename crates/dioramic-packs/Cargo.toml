@@ -1,0 +1,23 @@
+[package]
+name = "dioramic-packs"
+description = "Dioramic icon packs on disk: manifest, install from the providers' official archives (AWS, Google Cloud, Azure, Kubernetes), project icons and the registry loader"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+dioramic-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+# Reads the provider archives (deflate only, pure Rust backend).
+zip = { version = "9.0.0", default-features = false, features = ["deflate-flate2"] }
+flate2 = "1.1.10"
+
+[dev-dependencies]
+tempfile = "3.27.0"
+
+[lints]
+workspace = true

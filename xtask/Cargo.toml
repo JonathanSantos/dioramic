@@ -1,0 +1,27 @@
+[package]
+name = "xtask"
+description = "Dioramic dev mini-engine: qa, gallery (contact sheets), golden files"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+dioramic-spec.workspace = true
+dioramic-core.workspace = true
+dioramic-render.workspace = true
+test-support.workspace = true
+clap.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+rayon.workspace = true
+# Contact-sheet frame and captions (same resvg as dioramic-render, embedded fonts).
+resvg.workspace = true
+# Showcase: 256-color thumbnails and mosaic (T-425).
+png.workspace = true
+quantette.workspace = true
+
+[lints]
+workspace = true

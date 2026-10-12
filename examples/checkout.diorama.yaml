@@ -1,0 +1,31 @@
+# Checkout Service: a cena da demo/banner do README.
+# Caminho de uma requisição: Internet -> borda -> API (2 instâncias) -> dados.
+diorama: 1
+title: Checkout Service
+subtitle: request path · rendered by dioramic
+theme: blueprint
+view: { rotation: 270 }
+
+zones:
+  - { id: internet, label: INTERNET, color: violet }
+  - { id: edge,     label: EDGE,     color: blue }
+  - { id: app,      label: APP TIER, color: orange }
+  - { id: data,     label: DATA,     color: teal }
+
+nodes:
+  - { id: users, icon: cloud,        label: Users,         zone: internet }
+  - { id: lb,    icon: loadbalancer, label: Load Balancer, zone: edge }
+  - { id: api1,  icon: server,       label: "API #1",      zone: app }
+  - { id: api2,  icon: server,       label: "API #2",      zone: app }
+  - { id: db,    icon: postgres,     label: Postgres,      zone: data }
+  - { id: cache, icon: redis,        label: Redis,         zone: data }
+
+edges:
+  - users -> lb: HTTPS @primary
+  - lb -> api1 @primary
+  - lb -> api2: round-robin @primary
+  - api1 -> db: SQL @secondary
+  - api2 -> db @secondary
+  - api2 -> cache: GET / SET @secondary
+
+animation: { preset: flow }

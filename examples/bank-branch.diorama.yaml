@@ -1,0 +1,55 @@
+# Mayfair Branch Network: rede de uma agência bancária (exemplo completo do doc 04).
+# Reproduz a imagem de referência: WAN, sala de comunicações, áreas de atendimento e ATMs.
+diorama: 1
+title: Mayfair Branch Network
+theme: blueprint
+view: { rotation: auto }
+
+styles:
+  trunk:  { color: orange, width: 2.5 }
+  access: { color: blue }
+
+zones:
+  - { id: wan,    label: WAN,           color: blue }
+  - { id: comms,  label: Comms Room,    color: orange }
+  - { id: guest,  label: Customer WiFi, color: blue }
+  - { id: teller, label: Teller Area,   color: blue }
+  - { id: hall,   label: Banking Hall,  color: blue }
+  - { id: atm,    label: ATM Lobby,     color: teal, parent: hall, border: none }
+
+nodes:
+  - { id: uplink,    icon: cloud,        label: MPLS / Internet Uplink,     zone: wan }
+  - { id: fw,        icon: firewall,     label: Branch Firewall,            zone: wan }
+  - { id: rack,      icon: rack,         label: MAYFAIR-RACK-01 }
+  - { id: server,    icon: server,       label: Branch Server,              zone: comms }
+  - { id: core,      icon: switch,       label: Branch Core Switch,         zone: comms }
+  - { id: nas,       icon: nas,          label: Backup NAS,                 zone: comms }
+  - { id: guest_ap,  icon: access-point, label: Customer WiFi AP,           zone: guest }
+  - { id: teller_sw, icon: switch,       label: Teller Area Switch,         zone: teller }
+  - { id: ws1,       icon: workstation,  label: Teller Workstation 1,       zone: teller }
+  - { id: ws2,       icon: workstation,  label: Teller Workstation 2,       zone: teller }
+  - { id: phones,    icon: voip-phone,   label: Teller VoIP Phones,         zone: teller }
+  - { id: staff_ap,  icon: access-point, label: Staff WiFi AP,              zone: teller }
+  - { id: printer,   icon: printer,      label: Branch Printer,             zone: teller }
+  - { id: hall_sw,   icon: switch,       label: Banking Hall Switch,        zone: hall }
+  - { id: mgr_ws,    icon: workstation,  label: Branch Manager Workstation, zone: hall }
+  - { id: atm1,      icon: atm,          label: Lobby ATM 1,                zone: atm }
+  - { id: atm2,      icon: atm,          label: Lobby ATM 2,                zone: atm }
+
+edges:
+  - uplink -> fw: MPLS link to data centre @access
+  - fw -> core: 1Gbps trunk @trunk
+  - core -> server: 1Gbps Cat6 @trunk
+  - core -> nas: 1Gbps Cat6 @trunk
+  - rack .. core: Comms room rack
+  - core -> guest_ap: PoE+ (guest VLAN only) @trunk
+  - core -> teller_sw: 1Gbps PoE+ trunk @trunk
+  - core -> hall_sw: 1Gbps trunk @trunk
+  - teller_sw -> phones: PoE @access
+  - teller_sw -> ws1: Cat6 @access
+  - teller_sw -> ws2: Cat6 @access
+  - teller_sw -> staff_ap: PoE @access
+  - teller_sw -> printer: Cat6 @access
+  - hall_sw -> mgr_ws: Cat6 @access
+  - hall_sw -> atm1: ATM VLAN @access
+  - hall_sw -> atm2: ATM VLAN @access

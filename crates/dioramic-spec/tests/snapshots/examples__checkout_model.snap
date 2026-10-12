@@ -1,0 +1,272 @@
+---
+source: crates/dioramic-spec/tests/examples.rs
+expression: "pretty_json(&load_model(\"checkout.diorama.yaml\"))"
+---
+{
+  "title": "Checkout Service",
+  "subtitle": "request path · rendered by dioramic",
+  "theme": "blueprint",
+  "layout": {
+    "flow": "x",
+    "density": "spaced",
+    "wrap": "auto",
+    "routing": "curved",
+    "routing_source": "default",
+    "edge_colors": null
+  },
+  "view": {
+    "rotation": 270,
+    "grid": {
+      "size": 1.0,
+      "style": "lines",
+      "opacity": 1.0,
+      "color": null
+    },
+    "legend": "auto"
+  },
+  "styles": {},
+  "zones": [
+    {
+      "id": "internet",
+      "label": "INTERNET",
+      "color": "violet",
+      "parent": null,
+      "arrange": "auto",
+      "at": null,
+      "size": null,
+      "border": "dashed",
+      "path": "zones[0]"
+    },
+    {
+      "id": "edge",
+      "label": "EDGE",
+      "color": "blue",
+      "parent": null,
+      "arrange": "auto",
+      "at": null,
+      "size": null,
+      "border": "dashed",
+      "path": "zones[1]"
+    },
+    {
+      "id": "app",
+      "label": "APP TIER",
+      "color": "orange",
+      "parent": null,
+      "arrange": "auto",
+      "at": null,
+      "size": null,
+      "border": "dashed",
+      "path": "zones[2]"
+    },
+    {
+      "id": "data",
+      "label": "DATA",
+      "color": "teal",
+      "parent": null,
+      "arrange": "auto",
+      "at": null,
+      "size": null,
+      "border": "dashed",
+      "path": "zones[3]"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "users",
+      "icon": "cloud",
+      "label": "Users",
+      "zone": "internet",
+      "color": null,
+      "replicas": 1,
+      "badge": null,
+      "at": null,
+      "z": 0.0,
+      "size": "m",
+      "note": null,
+      "path": "nodes[0]"
+    },
+    {
+      "id": "lb",
+      "icon": "loadbalancer",
+      "label": "Load Balancer",
+      "zone": "edge",
+      "color": null,
+      "replicas": 1,
+      "badge": null,
+      "at": null,
+      "z": 0.0,
+      "size": "m",
+      "note": null,
+      "path": "nodes[1]"
+    },
+    {
+      "id": "api1",
+      "icon": "server",
+      "label": "API #1",
+      "zone": "app",
+      "color": null,
+      "replicas": 1,
+      "badge": null,
+      "at": null,
+      "z": 0.0,
+      "size": "m",
+      "note": null,
+      "path": "nodes[2]"
+    },
+    {
+      "id": "api2",
+      "icon": "server",
+      "label": "API #2",
+      "zone": "app",
+      "color": null,
+      "replicas": 1,
+      "badge": null,
+      "at": null,
+      "z": 0.0,
+      "size": "m",
+      "note": null,
+      "path": "nodes[3]"
+    },
+    {
+      "id": "db",
+      "icon": "postgres",
+      "label": "Postgres",
+      "zone": "data",
+      "color": null,
+      "replicas": 1,
+      "badge": null,
+      "at": null,
+      "z": 0.0,
+      "size": "m",
+      "note": null,
+      "path": "nodes[4]"
+    },
+    {
+      "id": "cache",
+      "icon": "redis",
+      "label": "Redis",
+      "zone": "data",
+      "color": null,
+      "replicas": 1,
+      "badge": null,
+      "at": null,
+      "z": 0.0,
+      "size": "m",
+      "note": null,
+      "path": "nodes[5]"
+    }
+  ],
+  "edges": [
+    {
+      "id": "users->lb",
+      "from": "users",
+      "to": "lb",
+      "label": "HTTPS",
+      "style": "primary",
+      "style_source": "spec",
+      "kind": null,
+      "color": null,
+      "width": null,
+      "dashed": null,
+      "arrow": "end",
+      "route": "curved",
+      "route_source": "default",
+      "flow": "off",
+      "path": "edges[0]"
+    },
+    {
+      "id": "lb->api1",
+      "from": "lb",
+      "to": "api1",
+      "label": null,
+      "style": "primary",
+      "style_source": "spec",
+      "kind": null,
+      "color": null,
+      "width": null,
+      "dashed": null,
+      "arrow": "end",
+      "route": "curved",
+      "route_source": "default",
+      "flow": "off",
+      "path": "edges[1]"
+    },
+    {
+      "id": "lb->api2",
+      "from": "lb",
+      "to": "api2",
+      "label": "round-robin",
+      "style": "primary",
+      "style_source": "spec",
+      "kind": null,
+      "color": null,
+      "width": null,
+      "dashed": null,
+      "arrow": "end",
+      "route": "curved",
+      "route_source": "default",
+      "flow": "off",
+      "path": "edges[2]"
+    },
+    {
+      "id": "api1->db",
+      "from": "api1",
+      "to": "db",
+      "label": "SQL",
+      "style": "secondary",
+      "style_source": "spec",
+      "kind": null,
+      "color": null,
+      "width": null,
+      "dashed": null,
+      "arrow": "end",
+      "route": "curved",
+      "route_source": "default",
+      "flow": "off",
+      "path": "edges[3]"
+    },
+    {
+      "id": "api2->db",
+      "from": "api2",
+      "to": "db",
+      "label": null,
+      "style": "secondary",
+      "style_source": "spec",
+      "kind": null,
+      "color": null,
+      "width": null,
+      "dashed": null,
+      "arrow": "end",
+      "route": "curved",
+      "route_source": "default",
+      "flow": "off",
+      "path": "edges[4]"
+    },
+    {
+      "id": "api2->cache",
+      "from": "api2",
+      "to": "cache",
+      "label": "GET / SET",
+      "style": "secondary",
+      "style_source": "spec",
+      "kind": null,
+      "color": null,
+      "width": null,
+      "dashed": null,
+      "arrow": "end",
+      "route": "curved",
+      "route_source": "default",
+      "flow": "off",
+      "path": "edges[5]"
+    }
+  ],
+  "animation": {
+    "preset": "flow",
+    "fps": 50,
+    "duration_s": 2.0,
+    "looped": true,
+    "icons": true,
+    "steps": []
+  }
+}

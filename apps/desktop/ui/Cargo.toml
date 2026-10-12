@@ -1,0 +1,32 @@
+[package]
+name = "dioramic-desktop-ui"
+description = "Dioramic desktop app frontend (Leptos CSR, compiled to wasm by trunk)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+dioramic-desktop-ipc.workspace = true
+leptos.workspace = true
+serde.workspace = true
+wasm-bindgen.workspace = true
+wasm-bindgen-futures.workspace = true
+serde-wasm-bindgen.workspace = true
+js-sys.workspace = true
+console_error_panic_hook.workspace = true
+
+[dependencies.web-sys]
+workspace = true
+features = [
+    "Window", "Document", "Element", "HtmlElement", "HtmlTextAreaElement", "HtmlDivElement",
+    "KeyboardEvent", "MouseEvent", "WheelEvent", "PointerEvent", "Event", "EventTarget", "DomRect",
+    "Storage", "MediaQueryList", "DomTokenList", "SvgElement", "SvgsvgElement", "SvgAnimatedRect", "SvgRect",
+    "NodeList", "CssStyleDeclaration", "HtmlDocument", "AddEventListenerOptions", "DomStringMap",
+    "ResizeObserver", "HtmlCollection", "FocusEvent",
+]
+
+[lints]
+workspace = true

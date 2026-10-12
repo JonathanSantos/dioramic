@@ -1,0 +1,36 @@
+# Video upload and transcoding: the client uploads the raw file straight to storage with a signed URL, a job queue
+# feeds transcoding workers that write one rendition per resolution, and viewers stream from a CDN.
+# Teaches: a long asynchronous pipeline (upload -> queue -> workers -> storage -> CDN) read left to right.
+diorama: 1
+title: Video Upload
+subtitle: signed upload, transcoding queue, CDN playback
+theme: schematic
+animation: { preset: flow }
+
+zones:
+  - { id: clients,  label: CLIENTS }
+  - { id: api,      label: API }
+  - { id: pipeline, label: TRANSCODING }
+  - { id: storage,  label: STORAGE }
+
+nodes:
+  - { id: creator,   icon: laptop,   label: Creator,          zone: clients }
+  - { id: viewer,    icon: mobile,   label: Viewer,           zone: clients }
+  - { id: upload,    icon: server,   label: Upload API,       zone: api }
+  - { id: meta,      icon: postgres, label: Video Metadata,   zone: api }
+  - { id: jobs,      icon: queue,    label: Transcode Jobs,   zone: pipeline }
+  - { id: workers,   icon: container, label: Transcoders,     zone: pipeline, replicas: 3 }
+  - { id: raw,       icon: storage,  label: Raw Uploads,      zone: storage }
+  - { id: renditions, icon: storage, label: Renditions,       zone: storage }
+  - { id: cdn,       icon: cdn,      label: Video CDN }
+
+edges:
+  - creator -> upload: signed URL
+  - creator -> raw: PUT file
+  - upload -> meta: SQL
+  - raw ..> jobs: ObjectCreated
+  - jobs -> workers
+  - workers -> renditions: HLS segments
+  - workers -> meta: status
+  - renditions -> cdn: origin pull
+  - viewer -> cdn: stream

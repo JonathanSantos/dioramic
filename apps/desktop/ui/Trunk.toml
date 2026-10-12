@@ -1,0 +1,12 @@
+[build]
+target = "index.html"
+dist = "dist"
+
+[watch]
+# Rebuild when the shared IPC types change too.
+watch = ["src", "index.html", "styles", "../ipc/src"]
+
+[serve]
+addresses = ["127.0.0.1"]
+port = 1420
+open = false

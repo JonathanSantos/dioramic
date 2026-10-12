@@ -1,0 +1,323 @@
+---
+source: crates/dioramic-mcp/tests/server.rs
+expression: snapshot
+---
+[
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Get guide"
+    },
+    "description": "Short markdown guide for writing DioramaSpec architecture diagrams. Topics: quickstart (workflow and minimal spec), spec (full format, edge shorthand, diagnostics), styles (themes, colors, edge styles), animation (GIF / animated SVG presets), examples (complete specs), icons (catalog). Read `spec` the first time you write a diagram.",
+    "input_schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "topic": {
+          "$ref": "#/$defs/GuideTopic",
+          "description": "quickstart, spec, styles, animation, examples or icons."
+        }
+      },
+      "required": [
+        "topic"
+      ],
+      "type": "object"
+    },
+    "name": "get_guide"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "Render diagram"
+    },
+    "description": "Render an isometric architecture / system design diagram from a DioramaSpec (inline `spec` object or `spec_path` to a .diorama.yaml file) and save it as PNG, SVG, animated SVG or GIF. Returns a preview image (a 4-frame filmstrip for animated formats) plus a JSON summary: output_path, spec_path, width, height, bytes, frames, duration_ms, view (rotation, density, theme, layout_algorithm, routing, grid, icon_animation, rotation_scores) and diagnostics. theme, rotation, density, layout_algorithm (flow | hub), routing (curved | orthogonal | straight | rails, elbow = rails), grid {size, style, opacity, color} and icon_animation override the spec for this render only (theme schematic defaults to hub + rails, edges colored by kind). On E_* errors nothing is rendered (isError): read the diagnostics, fix the spec and call again. Also fix W_* warnings you can see in the preview (max 3 rounds). Inline specs are saved as <slug>.diorama.yaml next to the output so humans and the desktop app can open them. Files are written only inside the project (client roots or working directory).",
+    "input_schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "animation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AnimationParams"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Animation overrides for gif / svg-animated."
+        },
+        "density": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Density"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Density override: spaced (default) or compact."
+        },
+        "format": {
+          "$ref": "#/$defs/FormatParam",
+          "description": "Output format. Default png."
+        },
+        "grid": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GridParams"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Background grid override: { size, style, opacity, color }."
+        },
+        "icon_animation": {
+          "default": null,
+          "description": "gif / svg-animated: small looping motion inside the icons (LEDs, waves, rings). Default true; false keeps\nthem still while packets flow.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "layout_algorithm": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LayoutAlgorithm"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Placement override: flow (zones in flow order) or hub (busiest nodes in the middle, short aligned edges).\nDefault: the spec's `layout.algorithm`, else hub for theme schematic and flow otherwise."
+        },
+        "output_path": {
+          "default": null,
+          "description": "Output file (inside the project). Default: next to `spec_path`, else `./diagrams/<slug>.<ext>`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "preview": {
+          "$ref": "#/$defs/PreviewParam",
+          "description": "Return the preview image (default) or not."
+        },
+        "rotation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RotationSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Camera rotation override: 0, 90, 180, 270 or \"auto\" (fewest collisions; the summary says which)."
+        },
+        "routing": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Routing"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Edge routing override: curved (default), orthogonal, straight or rails (alias elbow: legs along the iso\naxes, rounded 90° bends, fewest bends; default of theme schematic, best with density spaced). Edges with\ntheir own `route` keep it."
+        },
+        "save_spec": {
+          "default": null,
+          "description": "With an inline `spec`, also save it as `<slug>.diorama.yaml` next to the output. Default true.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "scale": {
+          "default": null,
+          "description": "PNG pixel density, 1–4. Default 2.",
+          "format": "double",
+          "maximum": 4.0,
+          "minimum": 1.0,
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "spec": {
+          "$ref": "#/$defs/SpecV1",
+          "default": null,
+          "description": "Inline DioramaSpec object. Provide either `spec` or `spec_path`."
+        },
+        "spec_path": {
+          "default": null,
+          "description": "Path to a `.diorama.yaml` / `.diorama.json` file inside the project (relative to the project root).\nPrefer this when you can edit files.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "theme": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ThemeName"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Theme override: blueprint, midnight, paper, mono or schematic."
+        }
+      },
+      "type": "object"
+    },
+    "name": "render_diagram"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Search icons"
+    },
+    "description": "Search the diagram icon catalog (servers, databases, caches, queues, load balancers, gateways, firewalls, Kubernetes, users, devices, monitoring) by name, alias or category, plus the installed provider packs: AWS (aws/lambda, aws/s3), Google Cloud (gcp/bigquery), Azure (azure/functions) and Kubernetes (k8s/pod), and project icons (local/<name>). Call it before using an icon you are not sure exists. Returns [{id, name, aliases, category, kind, pack}] and the installed packs; `pack` filters (builtin, aws, gcp, azure, k8s, local); `preview: true` also returns a contact sheet image. A pack that is not installed is installed by the user with `dioramic icons install <pack>`. If nothing fits, use `icon: block` with a color and label.",
+    "input_schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "category": {
+          "default": null,
+          "description": "Category filter: compute, network, security, data, messaging, cloud, clients, devices, k8s,\nobservability, generic.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "limit": {
+          "default": null,
+          "description": "Maximum results. Default 12.",
+          "format": "uint32",
+          "maximum": 100,
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "pack": {
+          "default": null,
+          "description": "Pack filter: builtin, aws, gcp, azure, k8s or local (project icons).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "preview": {
+          "default": false,
+          "description": "Also return a contact sheet image of the results. Default false.",
+          "type": "boolean"
+        },
+        "query": {
+          "default": "",
+          "description": "What to look for: \"postgres\", \"message queue\", \"load balancer\". Empty lists the catalog.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "name": "search_icons"
+  },
+  {
+    "annotations": {
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Validate diagram"
+    },
+    "description": "Check a DioramaSpec for an architecture diagram without rendering (milliseconds). Returns errors and lint warnings plus a text summary of the layout: the plan position of every zone and node in tiles, so you can reason about space without an image. Same `spec` / `spec_path` input as render_diagram.",
+    "input_schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "density": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Density"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Density override."
+        },
+        "layout_algorithm": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LayoutAlgorithm"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Placement override (flow, hub)."
+        },
+        "rotation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RotationSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Camera rotation override (0, 90, 180, 270, \"auto\")."
+        },
+        "routing": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Routing"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Edge routing override (curved, orthogonal, straight, rails; elbow = rails)."
+        },
+        "spec": {
+          "$ref": "#/$defs/SpecV1",
+          "default": null,
+          "description": "Inline DioramaSpec object. Provide either `spec` or `spec_path`."
+        },
+        "spec_path": {
+          "default": null,
+          "description": "Path to a `.diorama.yaml` / `.diorama.json` file inside the project (relative to the project root).\nPrefer this when you can edit files.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "theme": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ThemeName"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Theme override."
+        }
+      },
+      "type": "object"
+    },
+    "name": "validate_diagram"
+  }
+]

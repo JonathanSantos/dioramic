@@ -1,0 +1,34 @@
+# API gateway with a rate limiter: every request checks a token bucket in Redis before it reaches a backend service.
+# Teaches: a gateway hub fanning out to services, the cache class on the limiter, and observability on the side.
+diorama: 1
+title: Rate-Limited API
+subtitle: gateway checks a Redis token bucket per client
+theme: schematic
+animation: { preset: flow }
+
+zones:
+  - { id: clients,  label: CLIENTS }
+  - { id: edge,     label: GATEWAY }
+  # row keeps the gateway fan-out from crossing the services' SQL edges (the only placement hint in the gallery)
+  - { id: services, label: SERVICES, arrange: row }
+  - { id: data,     label: DATA }
+
+nodes:
+  - { id: web,      icon: laptop,      label: Web Client,     zone: clients }
+  - { id: partner,  icon: cloud,       label: Partner API,    zone: clients }
+  - { id: gateway,  icon: api-gateway, label: API Gateway,    zone: edge }
+  - { id: limiter,  icon: redis,       label: Rate Limiter, zone: edge }
+  - { id: orders,   icon: server,      label: Orders Service, zone: services }
+  - { id: users_svc, icon: server,     label: Users Service,  zone: services }
+  - { id: db,       icon: postgres,    label: Postgres,       zone: data }
+  - { id: metrics,  icon: monitoring,  label: Metrics }
+
+edges:
+  - web -> gateway: HTTPS
+  - partner -> gateway: HTTPS
+  - gateway -> limiter: INCR + TTL
+  - gateway -> orders
+  - gateway -> users_svc
+  - orders -> db: SQL
+  - users_svc -> db: SQL
+  - gateway -> metrics: 429s

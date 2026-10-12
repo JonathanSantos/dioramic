@@ -1,0 +1,41 @@
+[package]
+name = "dioramic-cli"
+description = "The `dioramic` binary: render, watch, lint, icons, mcp, init"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "dioramic"
+path = "src/main.rs"
+
+[dependencies]
+dioramic-spec.workspace = true
+dioramic-core.workspace = true
+dioramic-render.workspace = true
+dioramic-mcp.workspace = true
+dioramic-packs.workspace = true
+clap.workspace = true
+notify.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+# Colored output that honors NO_COLOR / CLICOLOR_FORCE and strips styles when stdout is not a TTY
+# (same crates clap already uses, so no extra code is compiled).
+anstream = "1.0.0"
+anstyle = "1.0.14"
+# Comment- and format-preserving edits of JSONC configs (`.vscode/mcp.json`, `~/.claude.json`) for `dioramic init`.
+jsonc-parser = { version = "0.34.0", features = ["cst", "serde_json"] }
+# Unified diff for `dioramic init --dry-run`.
+similar = "2.7.0"
+
+[dev-dependencies]
+tempfile = "3.27.0"
+
+[lints]
+workspace = true

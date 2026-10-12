@@ -1,0 +1,36 @@
+# URL shortener: create and redirect paths through one API, ids from a generator, links in a KV store with a read cache,
+# and click analytics shipped asynchronously so redirects stay fast.
+# Teaches: async (..>) messaging off the hot path, and cache vs data on the same service.
+diorama: 1
+title: URL Shortener
+subtitle: fast redirects, async click analytics
+theme: schematic
+layout: { algorithm: flow }
+animation: { preset: flow }
+
+zones:
+  - { id: clients,   label: CLIENTS }
+  - { id: api,       label: SERVICE }
+  - { id: data,      label: STORAGE }
+  - { id: analytics, label: ANALYTICS }
+
+nodes:
+  - { id: users,    icon: users,        label: Users,          zone: clients }
+  - { id: lb,       icon: loadbalancer, label: Load Balancer,  zone: api }
+  - { id: shortener, icon: server,      label: Shortener API,  zone: api, replicas: 2 }
+  - { id: idgen,    icon: block,        label: ID Generator,   zone: api }
+  - { id: cache,    icon: redis,        label: Link Cache,     zone: data }
+  - { id: kv,       icon: database,     label: KV Store,       zone: data }
+  - { id: clicks,   icon: queue,        label: Click Stream,   zone: analytics }
+  - { id: counter,  icon: function,     label: Click Counter,  zone: analytics }
+  - { id: olap,     icon: database,     label: Analytics DB,   zone: analytics }
+
+edges:
+  - users -> lb: HTTPS
+  - lb -> shortener
+  - shortener -> idgen: next id
+  - shortener -> cache: GET/SET
+  - shortener -> kv: put/get
+  - shortener ..> clicks: click event
+  - clicks -> counter
+  - counter -> olap

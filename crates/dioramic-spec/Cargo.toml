@@ -1,0 +1,24 @@
+[package]
+name = "dioramic-spec"
+description = "Diorama spec format: types, JSON/YAML parsing, edge shorthand, normalization and structural validation"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+serde-saphyr.workspace = true
+schemars.workspace = true
+indexmap.workspace = true
+thiserror.workspace = true
+strsim.workspace = true
+
+[dev-dependencies]
+insta.workspace = true
+proptest.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,44 @@
+# Web Platform: system design de alto nível no tema schematic (clientes -> borda -> serviços -> dados).
+# Arestas sem estilo: a cor vem da classe da conexão (client, external, service, messaging, cache, data).
+# Sem rotação ou at: o tema usa o layout hub (nós mais conectados no centro) e trilhos; o `wrap` abaixo só vale nos temas clássicos.
+diorama: 1
+title: Web Platform
+subtitle: high-level system design
+theme: schematic
+# wrap só vale para o layout `flow` dos temas clássicos; o `hub` (padrão do schematic) o ignora.
+layout: { wrap: 4 }
+
+zones:
+  - { id: clients, label: CLIENTS }
+  - { id: edge,    label: EDGE }
+  - { id: app,     label: SERVICES }
+  - { id: data,    label: DATA }
+
+nodes:
+  - { id: web,      icon: laptop,       label: Web App,      zone: clients }
+  - { id: mobile,   icon: mobile,       label: Mobile App,   zone: clients }
+  - { id: internet, icon: cloud,        label: Internet,     zone: edge }
+  - { id: cdn,      icon: cdn,          label: CDN,          zone: edge }
+  - { id: lb,       icon: loadbalancer, label: Load Balancer, zone: edge }
+  - { id: gateway,  icon: api-gateway,  label: API Gateway,  zone: app }
+  - { id: orders,   icon: server,       label: Orders API,   zone: app }
+  - { id: accounts, icon: server,       label: Accounts API, zone: app }
+  - { id: queue,    icon: queue,        label: Queue,        zone: app }
+  - { id: workers,  icon: function,     label: Workers,      zone: app, replicas: 3 }
+  - { id: db,       icon: postgres,     label: Postgres,     zone: data }
+  - { id: cache,    icon: redis,        label: Redis,        zone: data }
+
+edges:
+  - web -> internet: HTTPS
+  - mobile -> internet: HTTPS
+  - internet -> cdn
+  - cdn -> lb
+  - lb -> gateway
+  - gateway -> orders
+  - gateway -> accounts
+  - orders -> cache: GET/SET
+  - orders -> db: SQL
+  - accounts -> db
+  - orders ..> queue: OrderPlaced
+  - queue -> workers
+  - workers -> db

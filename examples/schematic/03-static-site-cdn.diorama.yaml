@@ -1,0 +1,25 @@
+# Static site on a CDN: DNS points the browser at the CDN edge, which serves from an object storage origin.
+# Teaches: forcing a connection class with `@external` (DNS is a third-party lookup, not app traffic),
+# and a deploy path from CI into the same storage the CDN reads.
+diorama: 1
+title: Static Site + CDN
+subtitle: DNS, CDN edge cache and an object storage origin
+theme: schematic
+
+zones:
+  - { id: clients, label: CLIENTS }
+  - { id: edge,    label: EDGE }
+  - { id: origin,  label: ORIGIN }
+
+nodes:
+  - { id: browser, icon: laptop,      label: Browser,        zone: clients }
+  - { id: dns,     icon: dns,         label: DNS,            zone: edge }
+  - { id: cdn,     icon: cdn,         label: CDN Edge,       zone: edge }
+  - { id: bucket,  icon: storage,     label: Site Bucket,    zone: origin }
+  - { id: ci,      icon: workstation, label: CI Deploy }
+
+edges:
+  - browser -> dns: resolve @external
+  - browser -> cdn: HTTPS
+  - cdn -> bucket: cache miss
+  - ci -> bucket: upload

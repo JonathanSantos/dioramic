@@ -1,0 +1,51 @@
+# Plataforma em Kubernetes: DNS e CDN na borda, ingress, namespaces com serviços,
+# banco gerenciado fora do cluster e uma pilha de observabilidade.
+diorama: 1
+title: Storefront on Kubernetes
+subtitle: ingress, namespaces and managed data
+theme: midnight
+
+layout: { density: compact }
+
+styles:
+  ingress: { color: blue, width: 2.5 }
+  data:    { color: teal }
+  telemetry: { color: violet, dashed: true }
+
+zones:
+  - { id: edge,     label: Edge,             color: blue }
+  - { id: cluster,  label: prod-cluster,     color: orange }
+  - { id: ns_web,   label: ns/web,           color: green,  parent: cluster }
+  - { id: ns_orders, label: ns/orders,       color: pink,   parent: cluster }
+  - { id: managed,  label: Managed Services, color: teal }
+  - { id: observe,  label: Observability,    color: violet }
+
+nodes:
+  - { id: users,      icon: users,       label: Shoppers,           zone: edge }
+  - { id: dns,        icon: dns,         label: DNS,                zone: edge }
+  - { id: cdn,        icon: cdn,         label: CDN,                zone: edge }
+  - { id: ingress,    icon: loadbalancer, label: Ingress Controller, zone: cluster }
+  - { id: web,        icon: pod,         label: storefront-web,     zone: ns_web, replicas: 3 }
+  - { id: catalog,    icon: pod,         label: catalog-svc,        zone: ns_web, replicas: 2 }
+  - { id: orders,     icon: pod,         label: orders-svc,         zone: ns_orders, replicas: 2 }
+  - { id: payments,   icon: pod,         label: payments-svc,       zone: ns_orders, badge: v2 }
+  - { id: db,         icon: postgres,    label: Cloud SQL Postgres, zone: managed }
+  - { id: cache,      icon: redis,       label: Memorystore Redis,  zone: managed }
+  - { id: metrics,    icon: monitor,     label: Prometheus,         zone: observe }
+  - { id: dashboards, icon: monitor,     label: Grafana,            zone: observe }
+
+edges:
+  - users -> dns: resolve
+  - users -> cdn: HTTPS @ingress
+  - cdn -> ingress: origin pull @ingress
+  - ingress -> web: /shop @ingress
+  - ingress -> orders: /api/orders @ingress
+  - web -> catalog: gRPC
+  - web -> orders: gRPC
+  - orders -> payments: gRPC
+  - catalog -> cache: GET / SET @data
+  - orders -> db: SQL @data
+  - payments -> db: SQL @data
+  - metrics ..> web: scrape @telemetry
+  - metrics ..> orders: scrape @telemetry
+  - dashboards -> metrics: PromQL @telemetry

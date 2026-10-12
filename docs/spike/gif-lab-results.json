@@ -1,0 +1,70 @@
+[
+  {
+    "variant": "a-960-20fps",
+    "px": "960x708",
+    "frames": 40,
+    "delayMs": 50,
+    "renderMsPerFrame": 14,
+    "encodeMs": 445,
+    "KB": 263,
+    "psnrDb": 48.5
+  },
+  {
+    "variant": "b-1280-33fps",
+    "px": "1280x944",
+    "frames": 66,
+    "delayMs": 30,
+    "renderMsPerFrame": 18,
+    "encodeMs": 1327,
+    "KB": 561,
+    "psnrDb": 51.1
+  },
+  {
+    "variant": "c-1600-50fps",
+    "px": "1600x1180",
+    "frames": 100,
+    "delayMs": 20,
+    "renderMsPerFrame": 27,
+    "encodeMs": 3106,
+    "KB": 1127,
+    "psnrDb": 51.8
+  },
+  {
+    "variant": "d-1600-50fps-midnight",
+    "px": "1600x1180",
+    "frames": 100,
+    "delayMs": 20,
+    "renderMsPerFrame": 28,
+    "encodeMs": 3123,
+    "KB": 1090,
+    "psnrDb": 49.8
+  },
+  {
+    "variant": "c sem frames delta",
+    "KB": 12081,
+    "psnrDb": 51.8
+  },
+  {
+    "variant": "c paleta só do 1º frame",
+    "KB": 1127,
+    "psnrDb": 51.6
+  },
+  {
+    "variant": "svg animado (blueprint)",
+    "KB": 29.9
+  },
+  {
+    "variant": "svg animado (midnight)",
+    "KB": 29.9
+  },
+  {
+    "variant": "webp 1600 50fps q90 (blueprint)",
+    "encodeMs": 2943,
+    "KB": 1376
+  },
+  {
+    "variant": "webp 1600 50fps q90 (midnight)",
+    "encodeMs": 2946,
+    "KB": 1357
+  }
+]

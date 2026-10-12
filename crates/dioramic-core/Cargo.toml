@@ -1,0 +1,27 @@
+[package]
+name = "dioramic-core"
+description = "Dioramic engine core: layout, procedural isometric icons, themes, scene, arrows, label collision, SVG and animation. No I/O, no native deps (wasm32-ready)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+dioramic-spec.workspace = true
+serde.workspace = true
+indexmap.workspace = true
+thiserror.workspace = true
+strsim.workspace = true
+ttf-parser.workspace = true
+rustybuzz.workspace = true
+# Read-only XML tree for sanitizing flat icon SVGs (pure Rust, wasm32-ready; already used by resvg).
+roxmltree = "0.21.1"
+
+[dev-dependencies]
+insta.workspace = true
+proptest.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

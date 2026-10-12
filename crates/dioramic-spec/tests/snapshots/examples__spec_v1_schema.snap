@@ -1,0 +1,1328 @@
+---
+source: crates/dioramic-spec/tests/examples.rs
+expression: pretty_json(&schema)
+---
+{
+  "$defs": {
+    "AnimationPreset": {
+      "description": "Animation preset (`docs/07-animacao.md#presets`).",
+      "oneOf": [
+        {
+          "const": "flow",
+          "description": "Dashes and packets moving along edges (loop).",
+          "type": "string"
+        },
+        {
+          "const": "build",
+          "description": "Zones appear, nodes drop in, edges draw, labels fade in.",
+          "type": "string"
+        },
+        {
+          "const": "story",
+          "description": "Step by step highlighted path with captions.",
+          "type": "string"
+        },
+        {
+          "const": "pulse",
+          "description": "Pulsing ring on marked nodes.",
+          "type": "string"
+        }
+      ]
+    },
+    "AnimationSpec": {
+      "additionalProperties": false,
+      "description": "`animation:` block (`docs/07-animacao.md`).",
+      "properties": {
+        "duration": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DurationSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Loop duration: seconds (`2`) or text (`\"2.5s\"`, `\"800ms\"`). Default 2 s."
+        },
+        "fps": {
+          "description": "Frames per second for raster output (GIF default 50).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "icons": {
+          "description": "Small looping motion inside the icons (LEDs, waves, rings). Default true.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "loop": {
+          "description": "Loop forever. Default true for `flow`/`pulse`.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "preset": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AnimationPreset"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`flow` (default), `build`, `story` or `pulse`."
+        },
+        "steps": {
+          "description": "Steps of the `story` preset.",
+          "items": {
+            "$ref": "#/$defs/AnimationStepSpec"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "AnimationStepSpec": {
+      "additionalProperties": false,
+      "description": "One step of a `story` animation.",
+      "properties": {
+        "caption": {
+          "description": "Caption shown under the diagram.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "duration": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DurationSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Step duration (default 2 s)."
+        },
+        "edges": {
+          "description": "Edge ids (`\"api1->cache\"`).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "effect": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StepEffect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Effect on the nodes (`pulse`, `highlight`)."
+        },
+        "nodes": {
+          "description": "Node ids.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "path": {
+          "description": "Sequence of node ids; becomes the consecutive edges.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "Arrange": {
+      "description": "How nodes are distributed inside a zone (`zones[].arrange`).",
+      "oneOf": [
+        {
+          "const": "auto",
+          "description": "Engine decides (default).",
+          "type": "string"
+        },
+        {
+          "const": "row",
+          "description": "One row along the flow axis.",
+          "type": "string"
+        },
+        {
+          "const": "column",
+          "description": "One column across the flow axis.",
+          "type": "string"
+        },
+        {
+          "const": "grid",
+          "description": "Near-square grid.",
+          "type": "string"
+        }
+      ]
+    },
+    "ArrowEnds": {
+      "description": "Which ends of an edge carry an arrow head.",
+      "oneOf": [
+        {
+          "const": "end",
+          "description": "Arrow at the target (default).",
+          "type": "string"
+        },
+        {
+          "const": "start",
+          "description": "Arrow at the source.",
+          "type": "string"
+        },
+        {
+          "const": "both",
+          "description": "Arrows at both ends.",
+          "type": "string"
+        },
+        {
+          "const": "none",
+          "description": "Plain line.",
+          "type": "string"
+        }
+      ]
+    },
+    "BorderStyle": {
+      "description": "Zone border style.",
+      "oneOf": [
+        {
+          "const": "dashed",
+          "description": "Dashed outline (default).",
+          "type": "string"
+        },
+        {
+          "const": "solid",
+          "description": "Solid outline.",
+          "type": "string"
+        },
+        {
+          "const": "none",
+          "description": "No outline (fill only).",
+          "type": "string"
+        }
+      ]
+    },
+    "ColorRef": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ColorToken",
+          "description": "Theme palette token (`blue`, `orange`…)."
+        },
+        {
+          "$ref": "#/$defs/HexColor",
+          "description": "Hex literal (`#3e50c8`)."
+        }
+      ],
+      "description": "A color in the spec: a palette token (preferred) or a hex literal."
+    },
+    "ColorToken": {
+      "description": "Palette token resolved by each theme into harmonic tones.",
+      "oneOf": [
+        {
+          "const": "blue",
+          "description": "Blue.",
+          "type": "string"
+        },
+        {
+          "const": "orange",
+          "description": "Orange.",
+          "type": "string"
+        },
+        {
+          "const": "teal",
+          "description": "Teal.",
+          "type": "string"
+        },
+        {
+          "const": "green",
+          "description": "Green.",
+          "type": "string"
+        },
+        {
+          "const": "violet",
+          "description": "Violet.",
+          "type": "string"
+        },
+        {
+          "const": "pink",
+          "description": "Pink.",
+          "type": "string"
+        },
+        {
+          "const": "red",
+          "description": "Red.",
+          "type": "string"
+        },
+        {
+          "const": "gray",
+          "description": "Gray.",
+          "type": "string"
+        }
+      ]
+    },
+    "Density": {
+      "description": "Layout density (`layout.density`). See `docs/06-renderizacao.md#densidade`.",
+      "oneOf": [
+        {
+          "const": "spaced",
+          "description": "Zones in a single line along the flow, generous gaps (default).",
+          "type": "string"
+        },
+        {
+          "const": "compact",
+          "description": "Zones folded in a serpentine block, smaller gaps (~58% less area).",
+          "type": "string"
+        }
+      ]
+    },
+    "DurationSpec": {
+      "anyOf": [
+        {
+          "description": "Seconds.",
+          "format": "double",
+          "type": "number"
+        },
+        {
+          "description": "`\"2.5s\"` / `\"800ms\"`; parsed by normalize.",
+          "type": "string"
+        }
+      ],
+      "description": "A duration: number of seconds, or text with unit (`\"2.5s\"`, `\"800ms\"`)."
+    },
+    "EdgeColors": {
+      "description": "How edges are colored (`layout.edge_colors`).",
+      "oneOf": [
+        {
+          "const": "semantic",
+          "description": "By connection class ([`EdgeKind`]); explicit styles and colors still win. Default of `schematic`.",
+          "type": "string"
+        },
+        {
+          "const": "style",
+          "description": "By style name (`primary`, `secondary`… or `styles`). Default of the other themes.",
+          "type": "string"
+        },
+        {
+          "const": "mono",
+          "description": "One color for every edge without an explicit color.",
+          "type": "string"
+        }
+      ]
+    },
+    "EdgeDetails": {
+      "additionalProperties": false,
+      "description": "Fields allowed in the value of a single-key edge map.",
+      "properties": {
+        "arrow": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ArrowEnds"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Arrow ends override (the operator already sets one)."
+        },
+        "color": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Color override."
+        },
+        "dashed": {
+          "description": "Dashed override.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "flow": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FlowSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Traffic animation on this edge."
+        },
+        "id": {
+          "description": "Edge id (default `\"from->to\"`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EdgeKind"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Connection class (data, cache, messaging, external, client, service, observability). Default: inferred."
+        },
+        "label": {
+          "description": "Pill label.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "route": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Routing"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Routing override."
+        },
+        "style": {
+          "description": "Style name.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "width": {
+          "description": "Width override (px).",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "EdgeEntry": {
+      "anyOf": [
+        {
+          "description": "`\"a -> b: label @style\"`.",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/EdgeSpec",
+          "description": "Long form with `from` / `to`."
+        },
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/EdgeKeyedValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": "`{ \"a -> b\": <label or details> }`. Must have exactly one key (checked by normalize).",
+          "type": "object"
+        }
+      ],
+      "description": "One entry of `edges:`. Three accepted shapes (see `docs/04-spec.md#edge`):\n\n1. shorthand string: `\"fw -> core: 1Gbps trunk @trunk\"`;\n2. single-key map (what YAML produces from an unquoted shorthand): `{ \"fw -> core\": \"1Gbps trunk @trunk\" }`\n   or `{ \"fw -> core\": { label: ..., style: ..., flow: true } }`;\n3. long form object with `from` / `to`.\n\nVariant order matters for `untagged`: `Long` is tried before `Keyed` (a long form always has `from`)."
+    },
+    "EdgeKeyedValue": {
+      "anyOf": [
+        {
+          "description": "Label text, optionally followed by `@style`.",
+          "type": "string"
+        },
+        {
+          "description": "Unquoted numeric label in YAML (`a -> b: 443`).",
+          "format": "double",
+          "type": "number"
+        },
+        {
+          "$ref": "#/$defs/EdgeDetails",
+          "description": "Extra fields."
+        }
+      ],
+      "description": "Value of a single-key edge map."
+    },
+    "EdgeKind": {
+      "description": "Semantic class of a connection (`edges[].kind`, inferred when absent). See\n`docs/06-renderizacao.md#cores-semânticas-de-conexão`.",
+      "oneOf": [
+        {
+          "const": "data",
+          "description": "Reads and writes to a database, storage or NAS.",
+          "type": "string"
+        },
+        {
+          "const": "cache",
+          "description": "Cache lookups.",
+          "type": "string"
+        },
+        {
+          "const": "messaging",
+          "description": "Queues, streams, event buses and async (`..>`) links.",
+          "type": "string"
+        },
+        {
+          "const": "external",
+          "description": "The internet, third parties, CDN, DNS.",
+          "type": "string"
+        },
+        {
+          "const": "client",
+          "description": "End-user clients reaching the edge.",
+          "type": "string"
+        },
+        {
+          "const": "service",
+          "description": "Service to service (default).",
+          "type": "string"
+        },
+        {
+          "const": "observability",
+          "description": "Metrics, logs and traces.",
+          "type": "string"
+        }
+      ]
+    },
+    "EdgeSpec": {
+      "additionalProperties": false,
+      "description": "Long form edge.",
+      "properties": {
+        "arrow": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ArrowEnds"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Arrow ends. Default `end`."
+        },
+        "color": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Color override."
+        },
+        "dashed": {
+          "description": "Dashed override.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "flow": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FlowSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Traffic animation: `true`, `false` or `reverse`."
+        },
+        "from": {
+          "description": "Source node id.",
+          "type": "string"
+        },
+        "id": {
+          "description": "Edge id (default `\"from->to\"`), used by `animation.steps`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EdgeKind"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Connection class (data, cache, messaging, external, client, service, observability). Default: inferred."
+        },
+        "label": {
+          "description": "Pill label in the middle of the edge.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "route": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Routing"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Routing. Default `layout.routing`."
+        },
+        "style": {
+          "description": "Style name (from `styles` or theme: primary, secondary, muted, danger, success). Default `primary`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "to": {
+          "description": "Target node id.",
+          "type": "string"
+        },
+        "width": {
+          "description": "Width override (px).",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "type": "object"
+    },
+    "EdgeStyleSpec": {
+      "additionalProperties": false,
+      "description": "A named edge style.",
+      "properties": {
+        "color": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Color token (`orange`) or hex."
+        },
+        "dashed": {
+          "description": "Dashed line.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "width": {
+          "description": "Stroke width in px (default 2.6).",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "FlowAxis": {
+      "description": "Main flow axis of the layout (`layout.flow`).",
+      "oneOf": [
+        {
+          "const": "x",
+          "description": "Sources → sinks along plan `x` (screen: down-right).",
+          "type": "string"
+        },
+        {
+          "const": "y",
+          "description": "Sources → sinks along plan `y` (screen: down-left).",
+          "type": "string"
+        }
+      ]
+    },
+    "FlowDirection": {
+      "description": "Named flow direction.",
+      "oneOf": [
+        {
+          "const": "forward",
+          "description": "Packets travel from → to.",
+          "type": "string"
+        },
+        {
+          "const": "reverse",
+          "description": "Packets travel to → from.",
+          "type": "string"
+        }
+      ]
+    },
+    "FlowSpec": {
+      "anyOf": [
+        {
+          "description": "`true` / `false`.",
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/$defs/FlowDirection",
+          "description": "`forward` / `reverse`."
+        }
+      ],
+      "description": "`flow:` value: boolean or `\"reverse\"`."
+    },
+    "GridSpec": {
+      "additionalProperties": false,
+      "description": "`view.grid` block.",
+      "properties": {
+        "color": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Color token or hex. Default: the theme's grid color."
+        },
+        "opacity": {
+          "description": "Opacity from 0 to 1. Default 1.",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "size": {
+          "description": "Side of a grid cell in plan tiles (0.25 to 4). Default 1 (one cell per tile).",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "style": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GridStyle"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`lines` (default), `dots` or `none`."
+        }
+      },
+      "type": "object"
+    },
+    "GridStyle": {
+      "description": "How the background grid is drawn (`view.grid.style`).",
+      "oneOf": [
+        {
+          "const": "lines",
+          "description": "Lines along the plan axes (default).",
+          "type": "string"
+        },
+        {
+          "const": "dots",
+          "description": "A dot at every intersection.",
+          "type": "string"
+        },
+        {
+          "const": "none",
+          "description": "No grid.",
+          "type": "string"
+        }
+      ]
+    },
+    "HexColor": {
+      "description": "A `#rrggbb` (or `#rgb`) literal as written in the spec. Validated by [`crate::validate`].",
+      "type": "string"
+    },
+    "LayoutAlgorithm": {
+      "description": "How zones and nodes are placed on the plan (`layout.algorithm`).",
+      "oneOf": [
+        {
+          "const": "flow",
+          "description": "Zones in flow order, in a row or folded serpentine (`density`, `wrap`). Default.",
+          "type": "string"
+        },
+        {
+          "const": "hub",
+          "description": "Hub-centered and tight: the most connected places in the middle, short edges, aligned on a half-tile\nlattice, zones as packed rectangles, sources still towards the start of the flow (`wrap` is ignored).",
+          "type": "string"
+        }
+      ]
+    },
+    "LayoutSpec": {
+      "additionalProperties": false,
+      "description": "`layout:` block.",
+      "properties": {
+        "algorithm": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LayoutAlgorithm"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Placement: `flow` (default; zones in flow order, in a row or folded) or `hub` (the most connected places\nin the middle, short aligned edges, zones packed tight)."
+        },
+        "density": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Density"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`spaced` (default, zones in a line) or `compact` (zones folded in a block)."
+        },
+        "edge_colors": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EdgeColors"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Edge coloring: `semantic` (by connection class: data, cache, messaging…), `style` (by style name) or\n`mono`. Default `semantic` in the `schematic` theme, `style` in the others."
+        },
+        "flow": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FlowAxis"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Main flow axis. Default `x`."
+        },
+        "routing": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Routing"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Default edge routing. Default `curved` (`rails` in the `schematic` theme)."
+        },
+        "wrap": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Wrap"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Zones per row before folding: `auto` or an integer."
+        }
+      },
+      "type": "object"
+    },
+    "LegendMode": {
+      "description": "When the edge legend is drawn (`view.legend`).",
+      "oneOf": [
+        {
+          "const": "auto",
+          "description": "With semantic colors and at least two classes in use (default).",
+          "type": "string"
+        },
+        {
+          "const": "on",
+          "description": "Always (with semantic colors).",
+          "type": "string"
+        },
+        {
+          "const": "off",
+          "description": "Never.",
+          "type": "string"
+        }
+      ]
+    },
+    "NodeSize": {
+      "description": "Icon scale (`nodes[].size`).",
+      "oneOf": [
+        {
+          "const": "s",
+          "description": "Small (×0.75).",
+          "type": "string"
+        },
+        {
+          "const": "m",
+          "description": "Medium (×1.0, default).",
+          "type": "string"
+        },
+        {
+          "const": "l",
+          "description": "Large (×1.3).",
+          "type": "string"
+        }
+      ]
+    },
+    "NodeSpec": {
+      "additionalProperties": false,
+      "description": "A component.",
+      "properties": {
+        "at": {
+          "description": "Pin the position at `[x, y]` tiles (half tiles allowed).",
+          "items": {
+            "format": "double",
+            "type": "number"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "badge": {
+          "description": "Small tag in the corner (`v2`, `!`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "color": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Tint for procedural icons."
+        },
+        "icon": {
+          "description": "Icon id from the catalog (`server`, `postgres`, `k8s/pod`…). Inferred from the id, else `block`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "description": "Unique snake_case id.",
+          "type": "string"
+        },
+        "label": {
+          "description": "Label (≤ 28 chars; longer wraps to 2 lines).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "note": {
+          "description": "Tooltip (desktop app / HTML export only).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "replicas": {
+          "description": "Draw N stacked copies and a `×N` badge. Default 1.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "size": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/NodeSize"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Icon scale `s | m | l`. Default `m`."
+        },
+        "z": {
+          "description": "Elevation in tiles. Default 0.",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "zone": {
+          "description": "Zone id.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "RotationSpec": {
+      "description": "Camera rotation in 90° steps, or \"auto\" to pick the angle with the fewest collisions.",
+      "oneOf": [
+        {
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "type": "integer"
+        },
+        {
+          "enum": [
+            "auto"
+          ],
+          "type": "string"
+        }
+      ]
+    },
+    "Routing": {
+      "description": "Edge routing style (`layout.routing`, `edges[].route`).",
+      "oneOf": [
+        {
+          "const": "curved",
+          "description": "Cubic Bézier leaving the exit port and arriving tangent to the arrow head (default).",
+          "type": "string"
+        },
+        {
+          "const": "orthogonal",
+          "description": "Grid-following path with rounded corners.",
+          "type": "string"
+        },
+        {
+          "const": "straight",
+          "description": "Straight segment.",
+          "type": "string"
+        },
+        {
+          "const": "rails",
+          "description": "Isometric rails (elbows): straight legs along the plan axes only, rounded 90° bends, as few bends as\npossible, square into each port and comfortable clearance from the nodes. Also accepted as `elbow`.",
+          "type": "string"
+        }
+      ]
+    },
+    "StepEffect": {
+      "description": "Effect applied to the nodes of a story step.",
+      "oneOf": [
+        {
+          "const": "pulse",
+          "description": "Pulsing ring.",
+          "type": "string"
+        },
+        {
+          "const": "highlight",
+          "description": "Highlight (rest dimmed).",
+          "type": "string"
+        }
+      ]
+    },
+    "ThemeName": {
+      "description": "Built-in visual theme (see `docs/06-renderizacao.md#temas`).",
+      "oneOf": [
+        {
+          "const": "blueprint",
+          "description": "Light blue-grey background with grid (default).",
+          "type": "string"
+        },
+        {
+          "const": "midnight",
+          "description": "Dark navy background, neon edges with glow.",
+          "type": "string"
+        },
+        {
+          "const": "paper",
+          "description": "Warm off-white, pastel.",
+          "type": "string"
+        },
+        {
+          "const": "mono",
+          "description": "Greyscale, no shadows (print).",
+          "type": "string"
+        },
+        {
+          "const": "schematic",
+          "description": "Light technical drawing: silver icons, thick blue rails with the arrow in the middle, semantic edge colors.",
+          "type": "string"
+        }
+      ]
+    },
+    "ViewSpec": {
+      "additionalProperties": false,
+      "description": "`view:` block.",
+      "properties": {
+        "grid": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GridSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Background grid: cell size, style, opacity and color."
+        },
+        "legend": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LegendMode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Edge legend with semantic colors: `auto` (default, when two or more classes are in use), `on` or `off`."
+        },
+        "rotation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RotationSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Camera rotation: 0, 90, 180, 270 or `auto`. Default: `auto` when `layout.density: compact`, else 0."
+        }
+      },
+      "type": "object"
+    },
+    "Wrap": {
+      "description": "Zones per row before folding: \"auto\" or a positive integer.",
+      "oneOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "enum": [
+            "auto"
+          ],
+          "type": "string"
+        }
+      ]
+    },
+    "ZoneSpec": {
+      "additionalProperties": false,
+      "description": "An area on the floor.",
+      "properties": {
+        "arrange": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Arrange"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "How nodes are distributed inside the zone."
+        },
+        "at": {
+          "description": "Pin the zone's top corner at `[x, y]` tiles.",
+          "items": {
+            "format": "double",
+            "type": "number"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "border": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BorderStyle"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`dashed` (default), `solid` or `none`."
+        },
+        "color": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Color token or hex. Default: palette rotation."
+        },
+        "id": {
+          "description": "Unique snake_case id.",
+          "type": "string"
+        },
+        "label": {
+          "description": "Text of the label lying on the floor.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "parent": {
+          "description": "Parent zone id (nested zone).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "size": {
+          "description": "Force the size `[width, depth]` in tiles.",
+          "items": {
+            "format": "double",
+            "type": "number"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A Diorama spec, version 1: an isometric architecture diagram.",
+  "properties": {
+    "animation": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AnimationSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Animation (GIF / animated SVG)."
+    },
+    "diorama": {
+      "description": "Spec version. Must be `1`.",
+      "format": "uint32",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "edges": {
+      "description": "Connections. Shorthand string `\"a -> b: label @style\"`, single-key map, or long form object.",
+      "items": {
+        "$ref": "#/$defs/EdgeEntry"
+      },
+      "type": "array"
+    },
+    "layout": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LayoutSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Global layout hints (density, flow axis, wrapping, routing)."
+    },
+    "nodes": {
+      "description": "Components. At least one.",
+      "items": {
+        "$ref": "#/$defs/NodeSpec"
+      },
+      "type": "array"
+    },
+    "styles": {
+      "additionalProperties": {
+        "$ref": "#/$defs/EdgeStyleSpec"
+      },
+      "description": "Named edge styles, referenced as `@name` in edge shorthand or `style:` in long form.",
+      "type": "object"
+    },
+    "subtitle": {
+      "description": "Subtitle under the title.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "theme": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ThemeName"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Visual theme. Default `blueprint`."
+    },
+    "title": {
+      "description": "Title drawn in the top-left corner.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "view": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ViewSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Camera options (rotation)."
+    },
+    "zones": {
+      "description": "Areas on the floor that group nodes (network, room, VPC, cluster, tier).",
+      "items": {
+        "$ref": "#/$defs/ZoneSpec"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "diorama",
+    "nodes"
+  ],
+  "title": "SpecV1",
+  "type": "object"
+}

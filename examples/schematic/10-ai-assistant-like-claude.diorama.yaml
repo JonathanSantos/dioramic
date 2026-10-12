@@ -1,0 +1,55 @@
+# conceptual architecture, not the vendor's internal design
+# A Claude-style AI assistant, as commonly sketched in public system design discussions: clients reach an API gateway
+# (auth + rate limit), a conversation service keeps history, an orchestrator runs safety checks, calls tools and
+# search, and routes generation to GPU inference clusters; long jobs go through a queue; everything emits telemetry.
+# Teaches: an orchestrator hub with many classes of connection at once, still read clients -> gateway -> core -> GPUs.
+diorama: 1
+title: AI Assistant
+subtitle: conceptual Claude-style design (public system design notes)
+theme: schematic
+animation: { preset: flow }
+
+zones:
+  - { id: clients,   label: CLIENTS }
+  - { id: edge,      label: EDGE }
+  - { id: core,      label: ORCHESTRATION }
+  - { id: inference, label: INFERENCE }
+  - { id: data,      label: DATA }
+
+nodes:
+  - { id: web,       icon: laptop,      label: Web App,         zone: clients }
+  - { id: app,       icon: mobile,      label: Mobile App,      zone: clients }
+  - { id: devs,      icon: workstation, label: API Developers,  zone: clients }
+  - { id: gateway,   icon: api-gateway, label: API Gateway,     zone: edge }
+  - { id: limits,    icon: redis,       label: Auth + Rate Limit, zone: edge }
+  - { id: convo,     icon: server,      label: Conversations,   zone: core }
+  - { id: orch,      icon: server,      label: Orchestrator,    zone: core }
+  - { id: safety,    icon: firewall,    label: Safety,          zone: core }
+  - { id: tools,     icon: function,    label: Tools + Search,  zone: core }
+  - { id: router,    icon: loadbalancer, label: Model Router,   zone: inference }
+  - { id: gpu_a,     icon: rack,        label: GPU Cluster A,   zone: inference }
+  - { id: gpu_b,     icon: rack,        label: GPU Cluster B,   zone: inference }
+  - { id: jobs,      icon: queue,       label: Batch Jobs,      zone: inference }
+  - { id: history,   icon: postgres,    label: Conversation DB, zone: data }
+  - { id: kv_cache,  icon: redis,       label: Prompt Cache,    zone: data }
+  - { id: telemetry, icon: monitoring,  label: Observability }
+  - { id: web_search, icon: cloud,      label: Web }
+
+edges:
+  - web -> gateway: HTTPS
+  - app -> gateway: HTTPS
+  - devs -> gateway: API key
+  - gateway -> limits: check
+  - gateway -> convo
+  - convo -> history: SQL
+  - convo -> orch: turn
+  - orch -> safety
+  - orch -> tools: tool call
+  - tools -> web_search
+  - orch -> router: generate
+  - orch -> kv_cache: prefix
+  - router -> gpu_a
+  - router -> gpu_b
+  - orch ..> jobs: batch
+  - jobs ..> router
+  - orch -> telemetry: traces

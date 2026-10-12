@@ -1,0 +1,13 @@
+# Exemplo mínimo do doc 04: poucos nós, sem zonas, sem coordenadas e sem cores.
+# É o ponto de partida recomendado para a IA.
+diorama: 1
+title: Checkout Service
+nodes:
+  - { id: users, icon: users,        label: Users }
+  - { id: lb,    icon: loadbalancer, label: Load Balancer }
+  - { id: api,   icon: server,       label: API, replicas: 2 }
+  - { id: db,    icon: postgres }
+edges:
+  - users -> lb: HTTPS
+  - lb -> api
+  - api -> db: SQL

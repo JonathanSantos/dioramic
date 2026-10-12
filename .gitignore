@@ -1,0 +1,6 @@
+target/
+dist/
+apps/desktop/ui/dist/
+docs/work/
+.claude/
+.DS_Store
