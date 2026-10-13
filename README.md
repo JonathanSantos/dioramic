@@ -52,7 +52,36 @@ Inspirado no visual do [Isoflow](https://github.com/markmanx/isoflow) (e do fork
 
 ## Instalação
 
-Requisitos: **Rust 1.89 ou mais novo** (edição 2024). Ainda não há binários publicados; instale a partir da raiz deste repositório:
+Binários prontos para macOS (Apple Silicon e Intel), Linux (x86_64 e arm64) e Windows (x64 e arm64; o app desktop é só x64, que roda emulado no arm64) ficam nas
+[releases](https://github.com/JonathanSantos/dioramic/releases). O **CLI** (`dioramic`, que inclui o servidor MCP) e o
+**app desktop** são baixados separadamente.
+
+CLI + MCP no macOS e Linux (instala em `~/.local/bin`):
+
+```bash
+curl -fsSL https://github.com/JonathanSantos/dioramic/releases/latest/download/install.sh | sh
+```
+
+CLI + MCP no Windows (PowerShell; instala em `%LOCALAPPDATA%\Programs\dioramic\bin` e ajusta o `PATH`):
+
+```powershell
+irm https://github.com/JonathanSantos/dioramic/releases/latest/download/install.ps1 | iex
+```
+
+App desktop pelo mesmo instalador (`.app` em `/Applications` no macOS, AppImage em `~/.local/bin` no Linux, instalador `setup.exe` no Windows):
+
+```bash
+curl -fsSL https://github.com/JonathanSantos/dioramic/releases/latest/download/install.sh | sh -s -- --desktop
+```
+
+```powershell
+& ([scriptblock]::Create((irm https://github.com/JonathanSantos/dioramic/releases/latest/download/install.ps1))) -Desktop
+```
+
+Os instaladores aceitam `--version v0.1.0`, `--dir <pasta>` e `--dry-run` (no PowerShell: `-Version`, `-InstallDir`, `-DryRun`) e
+conferem o SHA-256 de cada download. Pacotes `.dmg`, `.deb`, `.rpm`, `.AppImage`, `.msi` e `.exe` também estão na página da release.
+
+A partir do código-fonte (requer **Rust 1.89 ou mais novo**, edição 2024), na raiz deste repositório:
 
 ```bash
 cargo install --path crates/dioramic-cli

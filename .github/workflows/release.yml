@@ -1,0 +1,321 @@
+# Builds and publishes a GitHub release when a `v*` tag is pushed.
+#
+#   prepare  → checks that the tag matches every version field, creates a *draft* release, uploads the installers
+#   cli      → `dioramic` binary (render, watch, lint, icons, init and the MCP server) for every OS/arch
+#   desktop  → Tauri app bundles (dmg, AppImage, deb, rpm, msi, setup.exe)
+#   publish  → aggregates SHA256SUMS, writes the notes and only then un-drafts the release
+#
+# Asset names carry no version on purpose: `releases/latest/download/<name>` must stay stable so the curl and
+# PowerShell installers (scripts/install.sh, scripts/install.ps1) never need the GitHub API. The release stays a
+# draft until every asset is uploaded, otherwise `latest/download` would 404 for anyone installing mid-build.
+#
+# Running it by hand (Actions → Release → Run workflow) is a dry run: everything is built and attached to the run as
+# artifacts, but no release is created. Use it to check the builds before pushing a tag.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  GH_TOKEN: ${{ github.token }}
+  TAG: ${{ github.ref_name }}
+
+jobs:
+  prepare:
+    name: Prepare draft release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check that the tag matches the crate and app versions
+        if: github.event_name == 'push'
+        run: |
+          expected="${TAG#v}"
+          workspace=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)
+          desktop=$(sed -n 's/^version = "\(.*\)"/\1/p' apps/desktop/Cargo.toml | head -n1)
+          tauri=$(jq -r .version apps/desktop/src-tauri/tauri.conf.json)
+          status=0
+          for pair in "Cargo.toml=$workspace" "apps/desktop/Cargo.toml=$desktop" "tauri.conf.json=$tauri"; do
+            if [ "${pair#*=}" != "$expected" ]; then
+              echo "::error::${pair%%=*} has version ${pair#*=}, but the tag is $TAG"
+              status=1
+            fi
+          done
+          exit "$status"
+
+      - name: Create the draft release
+        if: github.event_name == 'push'
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; reusing it."
+          else
+            prerelease=()
+            case "$TAG" in *-*) prerelease=(--prerelease) ;; esac
+            gh release create "$TAG" --draft --verify-tag --title "Dioramic $TAG" --notes "Building…" "${prerelease[@]}"
+          fi
+
+      - name: Upload the installers
+        if: github.event_name == 'push'
+        run: gh release upload "$TAG" scripts/install.sh scripts/install.ps1 --clobber
+
+  cli:
+    name: CLI (${{ matrix.target }})
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Ubuntu 22.04 links against glibc 2.35, so the binary runs on most distros still in support.
+          - { os: ubuntu-22.04, target: x86_64-unknown-linux-gnu }
+          - { os: ubuntu-22.04-arm, target: aarch64-unknown-linux-gnu }
+          # GitHub no longer offers Intel macOS runners; the Intel binary is cross-compiled on Apple Silicon.
+          - { os: macos-latest, target: x86_64-apple-darwin }
+          - { os: macos-latest, target: aarch64-apple-darwin }
+          - { os: windows-latest, target: x86_64-pc-windows-msvc }
+          - { os: windows-11-arm, target: aarch64-pc-windows-msvc }
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: cli-${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --locked -p dioramic-cli --target ${{ matrix.target }}
+
+      - name: Package
+        id: package
+        shell: bash
+        run: |
+          name="dioramic-cli-${{ matrix.target }}"
+          staging="$RUNNER_TEMP/$name"
+          mkdir -p "$staging"
+          cp README.md LICENSE-MIT LICENSE-APACHE "$staging/"
+          cd "$RUNNER_TEMP"
+          if [[ "${{ matrix.target }}" == *windows* ]]; then
+            cp "$GITHUB_WORKSPACE/target/${{ matrix.target }}/release/dioramic.exe" "$staging/"
+            asset="$name.zip"
+            pwsh -NoProfile -Command "Compress-Archive -Path '$name' -DestinationPath '$asset'"
+          else
+            cp "$GITHUB_WORKSPACE/target/${{ matrix.target }}/release/dioramic" "$staging/"
+            asset="$name.tar.gz"
+            tar -czf "$asset" "$name"
+          fi
+          echo "path=$RUNNER_TEMP/$asset" >> "$GITHUB_OUTPUT"
+
+      - name: Checksum
+        shell: bash
+        run: |
+          asset="${{ steps.package.outputs.path }}"
+          cd "$(dirname "$asset")"
+          file="$(basename "$asset")"
+          if command -v sha256sum >/dev/null; then sha256sum "$file"; else shasum -a 256 "$file"; fi > "$file.sha256"
+
+      - name: Upload to the release
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          asset="${{ steps.package.outputs.path }}"
+          gh release upload "$TAG" "$asset" "$asset.sha256" --clobber --repo "$GITHUB_REPOSITORY"
+
+      - name: Upload as a workflow artifact (dry run)
+        if: github.event_name != 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dioramic-cli-${{ matrix.target }}
+          path: ${{ steps.package.outputs.path }}*
+
+  desktop:
+    name: Desktop (${{ matrix.name }})
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # One universal dmg runs on both Apple Silicon and Intel Macs.
+          - name: macos-universal
+            os: macos-latest
+            target: universal-apple-darwin
+            rust-targets: aarch64-apple-darwin,x86_64-apple-darwin,wasm32-unknown-unknown
+            bundles: dmg
+          - name: linux-x86_64
+            os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            rust-targets: wasm32-unknown-unknown
+            bundles: appimage,deb,rpm
+          - name: linux-aarch64
+            os: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+            rust-targets: wasm32-unknown-unknown
+            bundles: appimage,deb,rpm
+          - name: windows-x86_64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            rust-targets: wasm32-unknown-unknown
+            bundles: nsis,msi
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install the Linux webview and bundler dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev libxdo-dev libssl-dev patchelf file
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-targets }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop
+          key: desktop-${{ matrix.name }}
+
+      # Prebuilt binaries: compiling trunk and tauri-cli from source would add ~15 minutes per job.
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: trunk,cargo-binstall
+
+      - name: Install the Tauri CLI
+        run: cargo binstall -y --locked "tauri-cli@^2"
+
+      - name: Build
+        working-directory: apps/desktop
+        env:
+          # Ad-hoc signature: without any signature Apple Silicon refuses to launch the app at all.
+          APPLE_SIGNING_IDENTITY: "-"
+          # linuxdeploy (AppImage) is itself an AppImage; FUSE is not available on the runners.
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+        run: cargo tauri build --ci --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
+
+      - name: Rename the bundles
+        shell: bash
+        run: |
+          bundle_dir="apps/desktop/target/${{ matrix.target }}/release/bundle"
+          out="$RUNNER_TEMP/desktop"
+          mkdir -p "$out"
+          # Copies the single file matching a glob to a stable, version-free asset name.
+          stage() {
+            local matches=($1)
+            if [ ${#matches[@]} -ne 1 ] || [ ! -f "${matches[0]}" ]; then
+              echo "::error::expected exactly one file for '$1', found: ${matches[*]}"
+              exit 1
+            fi
+            cp "${matches[0]}" "$out/$2"
+          }
+          prefix="dioramic-desktop-${{ matrix.name }}"
+          case "${{ matrix.name }}" in
+            macos-*)
+              stage "$bundle_dir/dmg/*.dmg" "$prefix.dmg" ;;
+            linux-*)
+              stage "$bundle_dir/appimage/*.AppImage" "$prefix.AppImage"
+              stage "$bundle_dir/deb/*.deb" "$prefix.deb"
+              stage "$bundle_dir/rpm/*.rpm" "$prefix.rpm" ;;
+            windows-*)
+              stage "$bundle_dir/nsis/*-setup.exe" "$prefix-setup.exe"
+              stage "$bundle_dir/msi/*.msi" "$prefix.msi" ;;
+          esac
+          cd "$out"
+          for file in *; do
+            if command -v sha256sum >/dev/null; then sha256sum "$file"; else shasum -a 256 "$file"; fi > "$file.sha256"
+          done
+
+      - name: Upload to the release
+        if: github.event_name == 'push'
+        shell: bash
+        run: gh release upload "$TAG" "$RUNNER_TEMP"/desktop/* --clobber --repo "$GITHUB_REPOSITORY"
+
+      - name: Upload as a workflow artifact (dry run)
+        if: github.event_name != 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dioramic-desktop-${{ matrix.name }}
+          path: ${{ runner.temp }}/desktop/*
+
+  publish:
+    name: Publish release
+    needs: [cli, desktop]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Aggregate the checksums
+        run: |
+          mkdir checksums && cd checksums
+          gh release download "$TAG" --pattern '*.sha256' --repo "$GITHUB_REPOSITORY"
+          cat ./*.sha256 | sort -k2 > SHA256SUMS
+          gh release upload "$TAG" SHA256SUMS --clobber --repo "$GITHUB_REPOSITORY"
+
+      - name: Write the notes and publish
+        run: |
+          base="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG"
+          latest="https://github.com/$GITHUB_REPOSITORY/releases/latest/download"
+          cat > notes.md <<EOF
+          ## Install
+
+          ### CLI + MCP server (\`dioramic\`)
+
+          macOS and Linux:
+
+          \`\`\`bash
+          curl -fsSL $latest/install.sh | sh
+          \`\`\`
+
+          Windows (PowerShell):
+
+          \`\`\`powershell
+          irm $latest/install.ps1 | iex
+          \`\`\`
+
+          The binary goes to \`~/.local/bin\` (Windows: \`%LOCALAPPDATA%\\Programs\\dioramic\\bin\`). Then run \`dioramic init\`
+          in your project to register the MCP server with your AI clients.
+
+          ### Desktop app
+
+          macOS and Linux:
+
+          \`\`\`bash
+          curl -fsSL $latest/install.sh | sh -s -- --desktop
+          \`\`\`
+
+          Windows (PowerShell):
+
+          \`\`\`powershell
+          & ([scriptblock]::Create((irm $latest/install.ps1))) -Desktop
+          \`\`\`
+
+          ### Direct downloads
+
+          | System | CLI + MCP | Desktop app |
+          |---|---|---|
+          | macOS (Apple Silicon) | [dioramic-cli-aarch64-apple-darwin.tar.gz]($base/dioramic-cli-aarch64-apple-darwin.tar.gz) | [dioramic-desktop-macos-universal.dmg]($base/dioramic-desktop-macos-universal.dmg) |
+          | macOS (Intel) | [dioramic-cli-x86_64-apple-darwin.tar.gz]($base/dioramic-cli-x86_64-apple-darwin.tar.gz) | [dioramic-desktop-macos-universal.dmg]($base/dioramic-desktop-macos-universal.dmg) |
+          | Linux x86_64 | [dioramic-cli-x86_64-unknown-linux-gnu.tar.gz]($base/dioramic-cli-x86_64-unknown-linux-gnu.tar.gz) | [AppImage]($base/dioramic-desktop-linux-x86_64.AppImage) · [deb]($base/dioramic-desktop-linux-x86_64.deb) · [rpm]($base/dioramic-desktop-linux-x86_64.rpm) |
+          | Linux arm64 | [dioramic-cli-aarch64-unknown-linux-gnu.tar.gz]($base/dioramic-cli-aarch64-unknown-linux-gnu.tar.gz) | [AppImage]($base/dioramic-desktop-linux-aarch64.AppImage) · [deb]($base/dioramic-desktop-linux-aarch64.deb) · [rpm]($base/dioramic-desktop-linux-aarch64.rpm) |
+          | Windows x64 | [dioramic-cli-x86_64-pc-windows-msvc.zip]($base/dioramic-cli-x86_64-pc-windows-msvc.zip) | [setup.exe]($base/dioramic-desktop-windows-x86_64-setup.exe) · [msi]($base/dioramic-desktop-windows-x86_64.msi) |
+          | Windows arm64 | [dioramic-cli-aarch64-pc-windows-msvc.zip]($base/dioramic-cli-aarch64-pc-windows-msvc.zip) | x64 installer (runs under emulation) |
+
+          Checksums: [SHA256SUMS]($base/SHA256SUMS).
+
+          > The desktop builds are not notarized/signed yet. On macOS, if you install the dmg from a browser download,
+          > right-click the app → **Open** the first time (the curl installer is not affected). On Windows, SmartScreen may
+          > ask you to confirm under **More info → Run anyway**.
+          EOF
+          gh release edit "$TAG" --notes-file notes.md --repo "$GITHUB_REPOSITORY"
+          gh release edit "$TAG" --draft=false --repo "$GITHUB_REPOSITORY"
